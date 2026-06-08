@@ -5,34 +5,127 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>404 — ページが見つかりません</title>
 <style>
-:root{--bg:#0c0e12;--surface:#141820;--text:#e8ecf4;--muted:#7a8499;--accent:#5b8def;--glow:rgba(91,141,239,.18);--border:rgba(255,255,255,.08)}
-*,*::before,*::after{box-sizing:border-box}html,body{margin:0;min-height:100%}
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
-.page{min-height:100vh;display:grid;place-items:center;padding:2rem;position:relative;overflow:hidden}
-.page::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,var(--glow) 0%,transparent 45%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.03) 0%,transparent 40%);pointer-events:none}
-.card{position:relative;width:min(540px,100%);padding:3rem 2.5rem;background:var(--surface);border:1px solid var(--border);border-radius:1.25rem;box-shadow:0 24px 80px rgba(0,0,0,.45)}
-.code{font-family:ui-monospace,monospace;font-size:clamp(4rem,14vw,6.5rem);font-weight:600;line-height:1;letter-spacing:-.04em;color:var(--accent);margin:0 0 .5rem}
-.title{font-size:1.5rem;font-weight:600;margin:0 0 .75rem}.msg{color:var(--muted);margin:0 0 2rem;font-size:1rem}
-.actions{display:flex;flex-wrap:wrap;gap:.75rem}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:.7rem 1.25rem;border-radius:.625rem;font:inherit;font-size:.9375rem;font-weight:500;text-decoration:none;cursor:pointer;border:1px solid transparent;transition:background .2s,border-color .2s,transform .15s}
-.btn:active{transform:scale(.98)}.btn-p{background:var(--accent);color:#fff}.btn-p:hover{filter:brightness(1.08)}
-.btn-s{background:transparent;color:var(--text);border-color:var(--border)}.btn-s:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04)}
-.status{display:inline-flex;align-items:center;gap:.5rem;font-family:ui-monospace,monospace;font-size:.75rem;color:var(--muted);margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:.08em}
-.status::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:#000;
+  color:#fff;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+.page{
+  position:relative;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+}
+.pivot{
+  position:absolute;
+  left:50%;
+  top:50%;
+  will-change:left,top;
+}
+.rotator{
+  animation:spin .35s linear infinite;
+  transform-origin:0 0;
+  will-change:transform;
+}
+.code{
+  position:absolute;
+  left:-1.5ch;
+  top:-0.5em;
+  margin:0;
+  font-size:70vmin;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+  color:#fff;
+  white-space:nowrap;
+  user-select:none;
+  transition:color .15s ease;
+}
+.digit{display:inline-block;width:1ch;text-align:center}
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
 </style>
 </head>
 <body>
 <main class="page">
-<article class="card">
-<p class="status">Not Found</p>
-<h1 class="code">404</h1>
-<h2 class="title">ページが見つかりません</h2>
-<p class="msg">お探しのページは移動または削除されたか、URL が間違っている可能性があります。</p>
-<div class="actions">
-<a class="btn btn-p" href="./">トップへ戻る</a>
-<button class="btn btn-s" type="button" onclick="history.back()">前のページへ</button>
+<div class="pivot">
+  <div class="rotator">
+    <h1 class="code" aria-label="404">
+      <span class="digit">4</span><span class="digit">0</span><span class="digit">4</span>
+    </h1>
+  </div>
 </div>
-</article>
 </main>
+<script>
+(() => {
+  const pivot = document.querySelector('.pivot');
+  const code = document.querySelector('.code');
+  const colors = ['#fff', '#ff3864', '#3d8bfd', '#3dd68c', '#ffdd57', '#b86bff', '#ff8c42', '#3ee7e3'];
+  let colorIdx = 0;
+  const speed = 100; 
+
+  let x = innerWidth / 2;
+  let y = innerHeight / 2;
+  const angle = Math.random() * Math.PI * 2;
+  let vx = Math.cos(angle) * speed;
+  let vy = Math.sin(angle) * speed;
+
+  function setPos() {
+    pivot.style.left = `${x}px`;
+    pivot.style.top = `${y}px`;
+  }
+
+  function bounce() {
+    code.style.color = colors[colorIdx++ % colors.length];
+  }
+
+  function clamp() {
+    const w = innerWidth;
+    const h = innerHeight;
+    let hit = false;
+
+    if (x <= 0) {
+      x = 0;
+      vx = Math.abs(vx);
+      hit = true;
+    } else if (x >= w) {
+      x = w;
+      vx = -Math.abs(vx);
+      hit = true;
+    }
+
+    if (y <= 0) {
+      y = 0;
+      vy = Math.abs(vy);
+      hit = true;
+    } else if (y >= h) {
+      y = h;
+      vy = -Math.abs(vy);
+      hit = true;
+    }
+
+    if (hit) bounce();
+    setPos();
+  }
+
+  function tick() {
+    x += vx;
+    y += vy;
+    clamp();
+    requestAnimationFrame(tick);
+  }
+
+  setPos();
+  tick();
+  addEventListener('resize', clamp);
+})();
+</script>
 </body>
 </html>
