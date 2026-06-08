@@ -1,279 +1,67 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Error Pages</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0c0e12;
-      --surface: #141820;
-      --text: #e8ecf4;
-      --muted: #7a8499;
-      --accent-404: #5b8def;
-      --accent-500: #ef6b5b;
-      --glow-404: rgba(91, 141, 239, 0.18);
-      --glow-500: rgba(239, 107, 91, 0.18);
-      --border: rgba(255, 255, 255, 0.08);
-      --font-display: "IBM Plex Sans", system-ui, sans-serif;
-      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; }
-
-    html, body { margin: 0; min-height: 100%; }
-
-    body {
-      font-family: var(--font-display);
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    [data-view] { display: none; }
-    [data-view].is-active { display: block; }
-
-    .page {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .page--error::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 20%, var(--glow) 0%, transparent 45%),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
-      pointer-events: none;
-    }
-
-    .page--404 { --accent: var(--accent-404); --glow: var(--glow-404); }
-    .page--500 { --accent: var(--accent-500); --glow: var(--glow-500); }
-
-    .card {
-      position: relative;
-      width: min(540px, 100%);
-      padding: 3rem 2.5rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 1.25rem;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-    }
-
-    .card--home { width: min(480px, 100%); padding: 2.5rem; }
-
-    .code {
-      font-family: var(--font-mono);
-      font-size: clamp(4rem, 14vw, 6.5rem);
-      font-weight: 600;
-      line-height: 1;
-      letter-spacing: -0.04em;
-      color: var(--accent);
-      margin: 0 0 0.5rem;
-    }
-
-    .title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0 0 0.75rem;
-    }
-
-    .message {
-      color: var(--muted);
-      margin: 0 0 2rem;
-      font-size: 1rem;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.7rem 1.25rem;
-      border-radius: 0.625rem;
-      font-family: inherit;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      text-decoration: none;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-    }
-
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { filter: brightness(1.08); }
-    .btn-secondary {
-      background: transparent;
-      color: var(--text);
-      border-color: var(--border);
-    }
-    .btn-secondary:hover {
-      border-color: rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 1.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .status::before {
-      content: "";
-      width: 0.5rem;
-      height: 0.5rem;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 12px var(--accent);
-    }
-
-    .link-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 0.75rem;
-    }
-
-    .link-list a {
-      display: block;
-      padding: 1rem 1.25rem;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-      color: var(--text);
-      text-decoration: none;
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      transition: border-color 0.2s ease, background 0.2s ease;
-    }
-
-    .link-list a:hover {
-      border-color: rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .link-list a span {
-      display: block;
-      font-family: var(--font-display);
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 0.25rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Error Pages</title>
+<style>
+:root{--bg:#0c0e12;--surface:#141820;--text:#e8ecf4;--muted:#7a8499;--a404:#5b8def;--a500:#ef6b5b;--g404:rgba(91,141,239,.18);--g500:rgba(239,107,91,.18);--border:rgba(255,255,255,.08)}
+*,*::before,*::after{box-sizing:border-box}html,body{margin:0;min-height:100%}body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+[data-view]{display:none}[data-view].on{display:block}
+.page{min-height:100vh;display:grid;place-items:center;padding:2rem;position:relative;overflow:hidden}
+.page.err::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,var(--glow) 0%,transparent 45%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.03) 0%,transparent 40%);pointer-events:none}
+.p404{--accent:var(--a404);--glow:var(--g404)}.p500{--accent:var(--a500);--glow:var(--g500)}
+.card{position:relative;width:min(540px,100%);padding:3rem 2.5rem;background:var(--surface);border:1px solid var(--border);border-radius:1.25rem;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.card.home{width:min(480px,100%);padding:2.5rem}
+.code{font-family:ui-monospace,monospace;font-size:clamp(4rem,14vw,6.5rem);font-weight:600;line-height:1;letter-spacing:-.04em;color:var(--accent);margin:0 0 .5rem}
+.title{font-size:1.5rem;font-weight:600;margin:0 0 .75rem}.msg{color:var(--muted);margin:0 0 2rem;font-size:1rem}
+.actions{display:flex;flex-wrap:wrap;gap:.75rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:.7rem 1.25rem;border-radius:.625rem;font:inherit;font-size:.9375rem;font-weight:500;text-decoration:none;cursor:pointer;border:1px solid transparent;transition:background .2s,border-color .2s,transform .15s}
+.btn:active{transform:scale(.98)}.btn-p{background:var(--accent);color:#fff}.btn-p:hover{filter:brightness(1.08)}
+.btn-s{background:transparent;color:var(--text);border-color:var(--border)}.btn-s:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04)}
+.status{display:inline-flex;align-items:center;gap:.5rem;font-family:ui-monospace,monospace;font-size:.75rem;color:var(--muted);margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:.08em}
+.status::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.links{list-style:none;margin:0;padding:0;display:grid;gap:.75rem}
+.links a{display:block;padding:1rem 1.25rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:.75rem;color:var(--text);text-decoration:none;font-family:ui-monospace,monospace;font-size:.9rem;transition:border-color .2s,background .2s}
+.links a:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06)}
+.links a span{display:block;font-family:system-ui,sans-serif;font-size:.8rem;color:var(--muted);margin-top:.25rem}
+</style>
 </head>
 <body>
-  <main class="page" data-view="home">
-    <article class="card card--home">
-      <h1 class="title">Error Pages</h1>
-      <p class="message">GitHub Pages 用のエラーページです。各ページをプレビューできます。</p>
-      <ul class="link-list">
-        <li>
-          <a href="?page=404">
-            404
-            <span>ページが見つかりません</span>
-          </a>
-        </li>
-        <li>
-          <a href="?page=500">
-            500
-            <span>サーバーエラー</span>
-          </a>
-        </li>
-        <li>
-          <a href="this-page-does-not-exist">
-            存在しない URL
-            <span>404 が自動表示されるか確認</span>
-          </a>
-        </li>
-      </ul>
-    </article>
-  </main>
-
-  <main class="page page--error page--404" data-view="404">
-    <article class="card">
-      <p class="status">Not Found</p>
-      <h1 class="code">404</h1>
-      <h2 class="title">ページが見つかりません</h2>
-      <p class="message">
-        お探しのページは移動または削除されたか、URL が間違っている可能性があります。
-      </p>
-      <div class="actions">
-        <a class="btn btn-primary" href="?page=home">トップへ戻る</a>
-        <button class="btn btn-secondary" type="button" onclick="history.back()">前のページへ</button>
-      </div>
-    </article>
-  </main>
-
-  <main class="page page--error page--500" data-view="500">
-    <article class="card">
-      <p class="status">Internal Server Error</p>
-      <h1 class="code">500</h1>
-      <h2 class="title">サーバーエラーが発生しました</h2>
-      <p class="message">
-        一時的な問題が発生しています。しばらく時間をおいてから、もう一度お試しください。
-      </p>
-      <div class="actions">
-        <a class="btn btn-primary" href="?page=home">トップへ戻る</a>
-        <button class="btn btn-secondary" type="button" onclick="location.reload()">再読み込み</button>
-      </div>
-    </article>
-  </main>
-
-  <script>
-    (function () {
-      var titles = {
-        home: "Error Pages",
-        404: "404 — ページが見つかりません",
-        500: "500 — サーバーエラー"
-      };
-
-      function resolveView() {
-        var params = new URLSearchParams(location.search);
-        var page = params.get("page");
-
-        if (page === "404") return "404";
-        if (page === "500") return "500";
-        if (page === "home") return "home";
-
-        var path = location.pathname.replace(/\/+$/, "");
-        var base = path.split("/").pop();
-
-        if (base === "web-error" || base === "404.html") return "home";
-        if (path.endsWith("/500")) return "500";
-
-        return "404";
-      }
-
-      var view = resolveView();
-
-      document.querySelectorAll("[data-view]").forEach(function (el) {
-        el.classList.toggle("is-active", el.dataset.view === view);
-      });
-
-      document.title = titles[view];
-    })();
-  </script>
+<main class="page" data-view="home"><article class="card home">
+<h1 class="title">Error Pages</h1>
+<p class="msg">GitHub Pages 用のエラーページです。各ページをプレビューできます。</p>
+<ul class="links">
+<li><a href="?page=404">404<span>ページが見つかりません</span></a></li>
+<li><a href="?page=500">500<span>サーバーエラー</span></a></li>
+<li><a href="this-page-does-not-exist">存在しない URL<span>404 が自動表示されるか確認</span></a></li>
+</ul>
+</article></main>
+<main class="page err p404" data-view="404"><article class="card">
+<p class="status">Not Found</p>
+<h1 class="code">404</h1>
+<h2 class="title">ページが見つかりません</h2>
+<p class="msg">お探しのページは移動または削除されたか、URL が間違っている可能性があります。</p>
+<div class="actions">
+<a class="btn btn-p" href="?page=home">トップへ戻る</a>
+<button class="btn btn-s" type="button" onclick="history.back()">前のページへ</button>
+</div>
+</article></main>
+<main class="page err p500" data-view="500"><article class="card">
+<p class="status">Internal Server Error</p>
+<h1 class="code">500</h1>
+<h2 class="title">サーバーエラーが発生しました</h2>
+<p class="msg">一時的な問題が発生しています。しばらく時間をおいてから、もう一度お試しください。</p>
+<div class="actions">
+<a class="btn btn-p" href="?page=home">トップへ戻る</a>
+<button class="btn btn-s" type="button" onclick="location.reload()">再読み込み</button>
+</div>
+</article></main>
+<script>
+(function(){var t={home:"Error Pages","404":"404 — ページが見つかりません","500":"500 — サーバーエラー"};
+function v(){var p=new URLSearchParams(location.search),n=p.get("page");if(n==="404")return"404";if(n==="500")return"500";if(n==="home")return"home";
+var r=location.pathname.replace(/\/+$/,""),b=r.split("/").pop();if(b==="web-error"||b==="404.html")return"home";if(r.endsWith("/500"))return"500";return"404"}
+var w=v();document.querySelectorAll("[data-view]").forEach(function(e){e.classList.toggle("on",e.dataset.view===w)});document.title=t[w]})()
+</script>
 </body>
 </html>
