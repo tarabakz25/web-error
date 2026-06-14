@@ -2,129 +2,370 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>404 — ページが見つかりません</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>404</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden}
+html,body{margin:0;height:100%;overflow:hidden;touch-action:manipulation}
 body{
   background:#000;
   color:#fff;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+  font-family:"DotGothic16",ui-monospace,monospace;
+  -webkit-font-smoothing:none;
+  -moz-osx-font-smoothing:unset;
+  user-select:none;
 }
-.page{
+.stage{
   position:relative;
   width:100%;
   height:100vh;
-  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(12px,3vh,24px);
+  padding:clamp(12px,3vh,28px) clamp(12px,4vw,24px);
 }
-.pivot{
-  position:absolute;
-  left:50%;
-  top:50%;
-  will-change:left,top;
+.hud{
+  text-align:center;
+  width:min(92vw,420px);
 }
-.rotator{
-  animation:spin .35s linear infinite;
-  transform-origin:0 0;
-  will-change:transform;
-}
-.code{
-  position:absolute;
-  left:-1.5ch;
-  top:-0.5em;
+.hud h1{
   margin:0;
-  font-size:70vmin;
-  font-weight:700;
-  line-height:1;
-  letter-spacing:0;
-  font-variant-numeric:tabular-nums;
-  color:#fff;
-  white-space:nowrap;
-  user-select:none;
-  transition:color .15s ease;
+  font-size:clamp(1.4rem,5vw,2rem);
+  font-weight:400;
+  letter-spacing:.12em;
 }
-.digit{display:inline-block;width:1ch;text-align:center}
-@keyframes spin{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
+.hud p{
+  margin:.45rem 0 0;
+  font-size:clamp(.85rem,3vw,1rem);
+  opacity:.75;
+}
+.stats{
+  display:flex;
+  justify-content:center;
+  gap:.6rem;
+  flex-wrap:wrap;
+  margin-top:.75rem;
+}
+.chip{
+  padding:.35rem .7rem;
+  border:2px solid #fff;
+  font-size:clamp(.75rem,2.5vw,.85rem);
+  line-height:1.2;
+}
+
+.maze-wrap{
+  position:relative;
+  width:min(88vw,360px);
+  aspect-ratio:1;
+  border:2px solid #fff;
+  padding:clamp(6px,1.5vw,10px);
+  background:#000;
+}
+.maze{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+  width:100%;
+  height:100%;
+  gap:0;
+}
+.cell{
+  position:relative;
+  background:#000;
+  border-top:2px solid #fff;
+  border-left:2px solid #fff;
+}
+.cell:nth-child(8n){border-right:2px solid #fff}
+.cell:nth-child(n+57){border-bottom:2px solid #fff}
+.cell.start{background:#111}
+.cell.goal{background:#111}
+.cell.player::after{
+  content:"";
+  position:absolute;
+  inset:18%;
+  background:#fff;
+  image-rendering:pixelated;
+}
+.cell.goal::before{
+  content:"";
+  position:absolute;
+  inset:22%;
+  border:2px solid #fff;
+  opacity:.45;
+}
+.cell.player.goal::before{opacity:1;border-color:#000}
+
+.controls{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.btn{
+  padding:.55rem 1rem;
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font:inherit;
+  font-size:clamp(.75rem,2.5vw,.85rem);
+  cursor:pointer;
+  text-decoration:none;
+}
+.btn:active{opacity:.55}
+
+.dpad{
+  display:grid;
+  grid-template-columns:repeat(3,2.8rem);
+  grid-template-rows:repeat(3,2.8rem);
+  gap:2px;
+  margin-top:.25rem;
+}
+.dpad button{
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font:inherit;
+  font-size:1rem;
+  cursor:pointer;
+  padding:0;
+}
+.dpad button:active{opacity:.55}
+.dpad .blank{background:transparent;border-color:transparent;pointer-events:none}
+.dpad .up{grid-column:2;grid-row:1}
+.dpad .left{grid-column:1;grid-row:2}
+.dpad .down{grid-column:2;grid-row:3}
+.dpad .right{grid-column:3;grid-row:2}
+
+.toast{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  padding:.9rem 1.3rem;
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font-size:clamp(.8rem,3vw,.95rem);
+  opacity:0;
+  pointer-events:none;
+  z-index:100;
+  text-align:center;
+  line-height:1.7;
+  white-space:pre-line;
+  transition:opacity .2s;
+}
+.toast.show{opacity:1}
+
+@media(max-height:640px){
+  .stage{justify-content:flex-start;padding-top:10px}
+  .dpad{display:none}
 }
 </style>
 </head>
 <body>
-<main class="page">
-<div class="pivot">
-  <div class="rotator">
-    <h1 class="code" aria-label="404">
-      <span class="digit">4</span><span class="digit">0</span><span class="digit">4</span>
-    </h1>
+<main class="stage">
+  <header class="hud">
+    <h1>404</h1>
+    <p>ページが見つかりません — 迷路を抜けてみて</p>
+    <div class="stats">
+      <div class="chip">歩数 <span id="steps">0</span></div>
+      <div class="chip">迷路 <span id="mazeNo">1</span></div>
+    </div>
+  </header>
+
+  <div class="maze-wrap" id="mazeWrap">
+    <div class="maze" id="maze" aria-label="8x8迷路"></div>
   </div>
-</div>
+
+  <div class="controls">
+    <button class="btn" id="newBtn" type="button">新しい迷路</button>
+    <a class="btn" href="./">トップへ</a>
+  </div>
+
+  <div class="dpad" aria-hidden="true">
+    <button class="up" type="button" data-dir="0,-1">▲</button>
+    <button class="left" type="button" data-dir="-1,0">◀</button>
+    <button class="down" type="button" data-dir="0,1">▼</button>
+    <button class="right" type="button" data-dir="1,0">▶</button>
+    <span class="blank"></span>
+  </div>
 </main>
+
+<div class="toast" id="toast" role="alert"></div>
+
 <script>
 (() => {
-  const pivot = document.querySelector('.pivot');
-  const code = document.querySelector('.code');
-  const colors = ['#fff', '#ff3864', '#3d8bfd', '#3dd68c', '#ffdd57', '#b86bff', '#ff8c42', '#3ee7e3'];
-  let colorIdx = 0;
-  const speed = 100; 
+  const SIZE = 8;
+  const mazeEl = document.getElementById('maze');
+  const stepsEl = document.getElementById('steps');
+  const mazeNoEl = document.getElementById('mazeNo');
+  const toast = document.getElementById('toast');
+  const newBtn = document.getElementById('newBtn');
 
-  let x = innerWidth / 2;
-  let y = innerHeight / 2;
-  const angle = Math.random() * Math.PI * 2;
-  let vx = Math.cos(angle) * speed;
-  let vy = Math.sin(angle) * speed;
+  let walls = null;
+  let player = { x: 0, y: 0 };
+  let steps = 0;
+  let mazeCount = 1;
+  let won = false;
+  let toastTimer = null;
+  let cells = [];
 
-  function setPos() {
-    pivot.style.left = `${x}px`;
-    pivot.style.top = `${y}px`;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
   }
 
-  function bounce() {
-    code.style.color = colors[colorIdx++ % colors.length];
-  }
+  function generateMaze(n) {
+    const visited = Array.from({ length: n }, () => Array(n).fill(false));
+    const h = Array.from({ length: n + 1 }, () => Array(n).fill(true));
+    const v = Array.from({ length: n }, () => Array(n + 1).fill(true));
 
-  function clamp() {
-    const w = innerWidth;
-    const h = innerHeight;
-    let hit = false;
-
-    if (x <= 0) {
-      x = 0;
-      vx = Math.abs(vx);
-      hit = true;
-    } else if (x >= w) {
-      x = w;
-      vx = -Math.abs(vx);
-      hit = true;
+    function carve(x, y) {
+      visited[y][x] = true;
+      const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]].sort(() => Math.random() - 0.5);
+      for (const [dx, dy] of dirs) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= n || ny >= n || visited[ny][nx]) continue;
+        if (dx === 1) v[y][x + 1] = false;
+        if (dx === -1) v[y][x] = false;
+        if (dy === 1) h[y + 1][x] = false;
+        if (dy === -1) h[y][x] = false;
+        carve(nx, ny);
+      }
     }
 
-    if (y <= 0) {
-      y = 0;
-      vy = Math.abs(vy);
-      hit = true;
-    } else if (y >= h) {
-      y = h;
-      vy = -Math.abs(vy);
-      hit = true;
+    carve(0, 0);
+    h[0][0] = false;
+    h[n][n - 1] = false;
+    return { h, v };
+  }
+
+  function canMove(x, y, dx, dy) {
+    if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return false;
+    if (dx === 1) return !walls.v[player.y][player.x + 1];
+    if (dx === -1) return !walls.v[player.y][player.x];
+    if (dy === 1) return !walls.h[player.y + 1][player.x];
+    if (dy === -1) return !walls.h[player.y][player.x];
+    return false;
+  }
+
+  function render() {
+    cells.forEach((cell, i) => {
+      const x = i % SIZE;
+      const y = Math.floor(i / SIZE);
+      cell.className = 'cell';
+      if (x === 0 && y === 0) cell.classList.add('start');
+      if (x === SIZE - 1 && y === SIZE - 1) cell.classList.add('goal');
+      if (x === player.x && y === player.y) cell.classList.add('player');
+
+      const top = walls.h[y][x];
+      const left = walls.v[y][x];
+      const right = walls.v[y][x + 1];
+      const bottom = walls.h[y + 1][x];
+      cell.style.borderTopColor = top ? '#fff' : 'transparent';
+      cell.style.borderLeftColor = left ? '#fff' : 'transparent';
+      cell.style.borderRightColor = right ? '#fff' : 'transparent';
+      cell.style.borderBottomColor = bottom ? '#fff' : 'transparent';
+    });
+    stepsEl.textContent = String(steps);
+    mazeNoEl.textContent = String(mazeCount);
+  }
+
+  function resetPlayer() {
+    player = { x: 0, y: 0 };
+    steps = 0;
+    won = false;
+  }
+
+  function newMaze(increment = true) {
+    walls = generateMaze(SIZE);
+    resetPlayer();
+    if (increment) mazeCount++;
+    render();
+  }
+
+  function tryMove(dx, dy) {
+    if (won || !canMove(player.x, player.y, dx, dy)) return;
+    player.x += dx;
+    player.y += dy;
+    steps++;
+    render();
+
+    if (player.x === SIZE - 1 && player.y === SIZE - 1) {
+      won = true;
+      showToast(`ゴール！\n${steps} 歩で到達`);
+      setTimeout(() => newMaze(), 1400);
     }
-
-    if (hit) bounce();
-    setPos();
   }
 
-  function tick() {
-    x += vx;
-    y += vy;
-    clamp();
-    requestAnimationFrame(tick);
+  function buildGrid() {
+    mazeEl.innerHTML = '';
+    cells = [];
+    for (let i = 0; i < SIZE * SIZE; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      mazeEl.appendChild(cell);
+      cells.push(cell);
+    }
   }
 
-  setPos();
-  tick();
-  addEventListener('resize', clamp);
+  newBtn.addEventListener('click', () => {
+    newMaze();
+    showToast('新しい迷路を生成した');
+  });
+
+  document.querySelectorAll('.dpad button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [dx, dy] = btn.dataset.dir.split(',').map(Number);
+      tryMove(dx, dy);
+    });
+  });
+
+  let touchStart = null;
+  mazeEl.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    touchStart = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+
+  mazeEl.addEventListener('touchend', (e) => {
+    if (!touchStart) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStart.x;
+    const dy = t.clientY - touchStart.y;
+    touchStart = null;
+    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) tryMove(dx > 0 ? 1 : -1, 0);
+    else tryMove(0, dy > 0 ? 1 : -1);
+  }, { passive: true });
+
+  addEventListener('keydown', (e) => {
+    const map = {
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      w: [0, -1],
+      s: [0, 1],
+      a: [-1, 0],
+      d: [1, 0],
+    };
+    const move = map[e.key];
+    if (!move) return;
+    e.preventDefault();
+    tryMove(move[0], move[1]);
+  });
+
+  buildGrid();
+  walls = generateMaze(SIZE);
+  render();
 })();
 </script>
 </body>
