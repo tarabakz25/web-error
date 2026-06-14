@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>500</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;touch-action:manipulation}
+body{
+  background:#000;
+  color:#fff;
+  font-family:"DotGothic16",ui-monospace,monospace;
+  -webkit-font-smoothing:none;
+  -moz-osx-font-smoothing:unset;
+  user-select:none;
+}
+.stage{
+  position:relative;
+  width:100%;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(12px,3vh,24px);
+  padding:clamp(12px,3vh,28px) clamp(12px,4vw,24px);
+}
+.hud{
+  text-align:center;
+  width:min(92vw,420px);
+}
+.hud h1{
+  margin:0;
+  font-size:clamp(1.4rem,5vw,2rem);
+  font-weight:400;
+  letter-spacing:.12em;
+}
+.hud p{
+  margin:.45rem 0 0;
+  font-size:clamp(.85rem,3vw,1rem);
+  opacity:.75;
+}
+.stats{
+  display:flex;
+  justify-content:center;
+  gap:.6rem;
+  flex-wrap:wrap;
+  margin-top:.75rem;
+}
+.chip{
+  padding:.35rem .7rem;
+  border:2px solid #fff;
+  font-size:clamp(.75rem,2.5vw,.85rem);
+  line-height:1.2;
+}
+
+.game-wrap{
+  position:relative;
+  width:min(88vw,360px);
+  aspect-ratio:1;
+  border:2px solid #fff;
+  padding:clamp(6px,1.5vw,10px);
+  background:#000;
+}
+.server{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr);
+  gap:0;
+}
+.cell{
+  position:relative;
+  border-top:2px solid #fff;
+  border-left:2px solid #fff;
+  background:#000;
+}
+.cell:nth-child(4n){border-right:2px solid #fff}
+.cell:nth-child(n+13){border-bottom:2px solid #fff}
+.cell.ok{background:#111}
+.cell.warn{background:#1a1a1a}
+.cell.err{
+  background:#fff;
+  color:#000;
+  animation:blink .35s step-end infinite;
+}
+@keyframes blink{50%{background:#000;color:#fff}}
+
+.health-wrap{
+  width:min(88vw,360px);
+}
+.health-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:clamp(.7rem,2.5vw,.8rem);
+  opacity:.75;
+  margin-bottom:.35rem;
+}
+.health{
+  height:clamp(14px,4vw,18px);
+  border:2px solid #fff;
+  background:#000;
+  overflow:hidden;
+}
+.health-fill{
+  height:100%;
+  width:100%;
+  background:#fff;
+  transform-origin:left center;
+  transition:transform .12s linear;
+}
+.health-wrap.critical .health{border-color:#fff;animation:shake .4s step-end infinite}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-2px)}
+  75%{transform:translateX(2px)}
+}
+
+.controls{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.btn{
+  padding:.55rem 1rem;
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font:inherit;
+  font-size:clamp(.75rem,2.5vw,.85rem);
+  cursor:pointer;
+  text-decoration:none;
+}
+.btn:active{opacity:.55}
+
+.toast{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  padding:.9rem 1.3rem;
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font-size:clamp(.8rem,3vw,.95rem);
+  opacity:0;
+  pointer-events:none;
+  z-index:100;
+  text-align:center;
+  line-height:1.7;
+  white-space:pre-line;
+  transition:opacity .2s;
+}
+.toast.show{opacity:1}
+
+@media(max-height:640px){
+  .stage{justify-content:flex-start;padding-top:10px}
+}
+</style>
+</head>
+<body>
+<main class="stage">
+  <header class="hud">
+    <h1>500</h1>
+    <p>サーバー内部エラー — バグを直して稼働を維持</p>
+    <div class="stats">
+      <div class="chip">修復 <span id="fixed">0</span></div>
+      <div class="chip">稼働 <span id="uptime">0</span>s</div>
+    </div>
+  </header>
+
+  <div class="health-wrap" id="healthWrap">
+    <div class="health-label">
+      <span>サーバー健全性</span>
+      <span id="healthText">100%</span>
+    </div>
+    <div class="health">
+      <div class="health-fill" id="healthFill"></div>
+    </div>
+  </div>
+
+  <div class="game-wrap">
+    <div class="server" id="server" aria-label="サーバーパネル"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="restartBtn" type="button">再起動</button>
+    <a class="btn" href="./">トップへ</a>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="alert"></div>
+
+<script>
+(() => {
+  const SIZE = 4;
+  const WIN_UPTIME = 30;
+  const SPAWN_MS = 1100;
+  const DECAY_PER_SEC = 4.5;
+  const FIX_GAIN = 14;
+  const BUG_DAMAGE = 18;
+
+  const serverEl = document.getElementById('server');
+  const fixedEl = document.getElementById('fixed');
+  const uptimeEl = document.getElementById('uptime');
+  const healthFillEl = document.getElementById('healthFill');
+  const healthTextEl = document.getElementById('healthText');
+  const healthWrapEl = document.getElementById('healthWrap');
+  const restartBtn = document.getElementById('restartBtn');
+  const toast = document.getElementById('toast');
+
+  const glyphs = ['!', '?', 'X', '#'];
+
+  let cells = [];
+  let health = 100;
+  let fixed = 0;
+  let uptime = 0;
+  let running = true;
+  let won = false;
+  let lastTick = performance.now();
+  let spawnTimer = null;
+  let toastTimer = null;
+  let loopId = null;
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function buildGrid() {
+    serverEl.innerHTML = '';
+    cells = [];
+    for (let i = 0; i < SIZE * SIZE; i++) {
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell ok';
+      cell.dataset.i = String(i);
+      cell.addEventListener('click', () => fixBug(i));
+      serverEl.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+
+  function renderHealth() {
+    const pct = Math.max(0, Math.min(100, health));
+    healthFillEl.style.transform = `scaleX(${pct / 100})`;
+    healthTextEl.textContent = `${Math.round(pct)}%`;
+    healthWrapEl.classList.toggle('critical', pct > 0 && pct < 25);
+  }
+
+  function renderStats() {
+    fixedEl.textContent = String(fixed);
+    uptimeEl.textContent = String(Math.floor(uptime));
+  }
+
+  function randomOkCell() {
+    const ok = cells
+      .map((c, i) => ({ c, i }))
+      .filter(({ c }) => c.classList.contains('ok') || c.classList.contains('warn'));
+    if (!ok.length) return -1;
+    return ok[Math.floor(Math.random() * ok.length)].i;
+  }
+
+  function spawnBug() {
+    if (!running || won) return;
+    const i = randomOkCell();
+    if (i < 0) return;
+    const cell = cells[i];
+    cell.className = 'cell err';
+    cell.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+    cell.disabled = false;
+  }
+
+  function fixBug(i) {
+    const cell = cells[i];
+    if (!cell.classList.contains('err') || !running) return;
+    cell.className = 'cell ok';
+    cell.textContent = '';
+    fixed++;
+    health = Math.min(100, health + FIX_GAIN);
+    renderHealth();
+    renderStats();
+    showToast('バグ修復 +');
+  }
+
+  function crash() {
+    running = false;
+    clearInterval(spawnTimer);
+    cells.forEach((cell) => {
+      if (cell.classList.contains('err')) return;
+      cell.className = 'cell warn';
+      cell.textContent = '';
+    });
+    showToast(`サーバーダウン\n${Math.floor(uptime)}秒 稼働 / 修復 ${fixed}`);
+  }
+
+  function win() {
+    won = true;
+    running = false;
+    clearInterval(spawnTimer);
+    cells.forEach((cell) => {
+      cell.className = 'cell ok';
+      cell.textContent = '';
+      cell.disabled = true;
+    });
+    showToast(`${WIN_UPTIME}秒 安定稼働！\n修復 ${fixed} 件`);
+  }
+
+  function restart() {
+    health = 100;
+    fixed = 0;
+    uptime = 0;
+    running = true;
+    won = false;
+    lastTick = performance.now();
+    cells.forEach((cell) => {
+      cell.className = 'cell ok';
+      cell.textContent = '';
+      cell.disabled = false;
+    });
+    renderHealth();
+    renderStats();
+    clearInterval(spawnTimer);
+    spawnTimer = setInterval(spawnBug, SPAWN_MS);
+    showToast('サーバー再起動');
+  }
+
+  function tick() {
+    if (!running) return;
+    const t = performance.now();
+    const dt = (t - lastTick) / 1000;
+    lastTick = t;
+
+    uptime += dt;
+    health -= DECAY_PER_SEC * dt;
+
+    cells.forEach((cell) => {
+      if (!cell.classList.contains('err')) return;
+      health -= BUG_DAMAGE * dt / SIZE;
+    });
+
+    renderHealth();
+    renderStats();
+
+    if (health <= 0) {
+      health = 0;
+      renderHealth();
+      crash();
+      return;
+    }
+
+    if (uptime >= WIN_UPTIME) win();
+  }
+
+  restartBtn.addEventListener('click', restart);
+
+  buildGrid();
+  renderHealth();
+  renderStats();
+  spawnTimer = setInterval(spawnBug, SPAWN_MS);
+  loopId = setInterval(tick, 50);
+})();
+</script>
+</body>
+</html>

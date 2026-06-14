@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>429</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;touch-action:manipulation}
+body{
+  background:#000;
+  color:#fff;
+  font-family:"DotGothic16",ui-monospace,monospace;
+  -webkit-font-smoothing:none;
+  -moz-osx-font-smoothing:unset;
+  user-select:none;
+}
+.stage{
+  position:relative;
+  width:100%;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(12px,3vh,24px);
+  padding:clamp(12px,3vh,28px) clamp(12px,4vw,24px);
+}
+.hud{
+  text-align:center;
+  width:min(92vw,420px);
+}
+.hud h1{
+  margin:0;
+  font-size:clamp(1.4rem,5vw,2rem);
+  font-weight:400;
+  letter-spacing:.12em;
+}
+.hud p{
+  margin:.45rem 0 0;
+  font-size:clamp(.85rem,3vw,1rem);
+  opacity:.75;
+}
+.stats{
+  display:flex;
+  justify-content:center;
+  gap:.6rem;
+  flex-wrap:wrap;
+  margin-top:.75rem;
+}
+.chip{
+  padding:.35rem .7rem;
+  border:2px solid #fff;
+  font-size:clamp(.75rem,2.5vw,.85rem);
+  line-height:1.2;
+}
+
+.game-wrap{
+  width:min(88vw,360px);
+  border:2px solid #fff;
+  padding:clamp(10px,2.5vw,16px);
+  background:#000;
+}
+.quota{
+  display:grid;
+  grid-template-columns:repeat(10,1fr);
+  gap:4px;
+  margin-bottom:clamp(12px,3vh,18px);
+}
+.slot{
+  aspect-ratio:1;
+  border:2px solid #fff;
+  background:#000;
+  opacity:.25;
+  transition:opacity .15s,background .15s;
+}
+.slot.done{background:#fff;opacity:1}
+.slot.next{opacity:.55;border-style:dashed}
+
+.meter-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:clamp(.7rem,2.5vw,.8rem);
+  opacity:.75;
+  margin-bottom:.35rem;
+}
+.meter{
+  height:clamp(14px,4vw,18px);
+  border:2px solid #fff;
+  background:#000;
+  margin-bottom:clamp(14px,3vh,20px);
+  overflow:hidden;
+}
+.meter-fill{
+  height:100%;
+  width:0%;
+  background:#fff;
+  transition:width .08s linear;
+}
+.meter.blocked .meter-fill{background:repeating-linear-gradient(
+  -45deg,#fff,#fff 4px,#000 4px,#000 8px
+)}
+
+.send-btn{
+  display:block;
+  width:100%;
+  padding:clamp(.7rem,3vh,1rem);
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font:inherit;
+  font-size:clamp(.9rem,3.5vw,1.1rem);
+  letter-spacing:.2em;
+  cursor:pointer;
+}
+.send-btn:active:not(:disabled){opacity:.55}
+.send-btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+  letter-spacing:.1em;
+}
+.hint{
+  margin-top:.65rem;
+  text-align:center;
+  font-size:clamp(.7rem,2.5vw,.8rem);
+  opacity:.55;
+  line-height:1.5;
+}
+
+.controls{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.btn{
+  padding:.55rem 1rem;
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font:inherit;
+  font-size:clamp(.75rem,2.5vw,.85rem);
+  cursor:pointer;
+  text-decoration:none;
+}
+.btn:active{opacity:.55}
+
+.toast{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  padding:.9rem 1.3rem;
+  border:2px solid #fff;
+  background:#000;
+  color:#fff;
+  font-size:clamp(.8rem,3vw,.95rem);
+  opacity:0;
+  pointer-events:none;
+  z-index:100;
+  text-align:center;
+  line-height:1.7;
+  white-space:pre-line;
+  transition:opacity .2s;
+}
+.toast.show{opacity:1}
+
+@media(max-height:640px){
+  .stage{justify-content:flex-start;padding-top:10px}
+}
+</style>
+</head>
+<body>
+<main class="stage">
+  <header class="hud">
+    <h1>429</h1>
+    <p>リクエストが多すぎます — 間隔を空けて送って</p>
+    <div class="stats">
+      <div class="chip">成功 <span id="success">0</span>/10</div>
+      <div class="chip">制限 <span id="blocked">0</span></div>
+    </div>
+  </header>
+
+  <div class="game-wrap">
+    <div class="quota" id="quota" aria-label="リクエスト進捗"></div>
+    <div class="meter-label">
+      <span>クールダウン</span>
+      <span id="meterText">OK</span>
+    </div>
+    <div class="meter" id="meter">
+      <div class="meter-fill" id="meterFill"></div>
+    </div>
+    <button class="send-btn" id="sendBtn" type="button">SEND</button>
+    <p class="hint">速く押しすぎるとレート制限<br>スペースキーでも送信できる</p>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="resetBtn" type="button">リセット</button>
+    <a class="btn" href="./">トップへ</a>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="alert"></div>
+
+<script>
+(() => {
+  const GOAL = 10;
+  const COOLDOWN_MS = 900;
+  const BLOCK_MS = 2200;
+
+  const quotaEl = document.getElementById('quota');
+  const successEl = document.getElementById('success');
+  const blockedEl = document.getElementById('blocked');
+  const meterEl = document.getElementById('meter');
+  const meterFillEl = document.getElementById('meterFill');
+  const meterTextEl = document.getElementById('meterText');
+  const sendBtn = document.getElementById('sendBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const toast = document.getElementById('toast');
+
+  let success = 0;
+  let blocked = 0;
+  let lastSend = 0;
+  let lockedUntil = 0;
+  let won = false;
+  let toastTimer = null;
+  let raf = null;
+  let slots = [];
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function buildQuota() {
+    quotaEl.innerHTML = '';
+    slots = [];
+    for (let i = 0; i < GOAL; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      quotaEl.appendChild(slot);
+      slots.push(slot);
+    }
+  }
+
+  function updateQuota() {
+    slots.forEach((slot, i) => {
+      slot.className = 'slot';
+      if (i < success) slot.classList.add('done');
+      else if (i === success && !won) slot.classList.add('next');
+    });
+    successEl.textContent = String(success);
+    blockedEl.textContent = String(blocked);
+  }
+
+  function now() {
+    return performance.now();
+  }
+
+  function updateMeter() {
+    const t = now();
+    if (lockedUntil > t) {
+      const left = lockedUntil - t;
+      const pct = (1 - left / BLOCK_MS) * 100;
+      meterEl.classList.add('blocked');
+      meterFillEl.style.width = `${pct}%`;
+      meterTextEl.textContent = `${Math.ceil(left / 1000)}s`;
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'WAIT...';
+      raf = requestAnimationFrame(updateMeter);
+      return;
+    }
+
+    meterEl.classList.remove('blocked');
+    sendBtn.disabled = won;
+    sendBtn.textContent = won ? 'CLEAR' : 'SEND';
+
+    const since = t - lastSend;
+    if (lastSend === 0 || since >= COOLDOWN_MS) {
+      meterFillEl.style.width = '100%';
+      meterTextEl.textContent = 'OK';
+      return;
+    }
+
+    const pct = (since / COOLDOWN_MS) * 100;
+    meterFillEl.style.width = `${pct}%`;
+    meterTextEl.textContent = `${Math.ceil((COOLDOWN_MS - since) / 1000)}s`;
+    raf = requestAnimationFrame(updateMeter);
+  }
+
+  function reset() {
+    success = 0;
+    blocked = 0;
+    lastSend = 0;
+    lockedUntil = 0;
+    won = false;
+    updateQuota();
+    cancelAnimationFrame(raf);
+    updateMeter();
+  }
+
+  function send() {
+    if (won) return;
+    const t = now();
+
+    if (t < lockedUntil) {
+      showToast('まだ制限中...');
+      return;
+    }
+
+    if (lastSend && t - lastSend < COOLDOWN_MS) {
+      blocked++;
+      lockedUntil = t + BLOCK_MS;
+      blockedEl.textContent = String(blocked);
+      showToast('429 Too Many Requests\nしばらく待って');
+      cancelAnimationFrame(raf);
+      updateMeter();
+      return;
+    }
+
+    lastSend = t;
+    success++;
+    updateQuota();
+
+    if (success >= GOAL) {
+      won = true;
+      showToast('全リクエスト成功！\nお待ちください');
+      sendBtn.textContent = 'CLEAR';
+      cancelAnimationFrame(raf);
+      updateMeter();
+      return;
+    }
+
+    showToast(`リクエスト ${success}/${GOAL}`);
+    cancelAnimationFrame(raf);
+    updateMeter();
+  }
+
+  sendBtn.addEventListener('click', send);
+  resetBtn.addEventListener('click', () => {
+    reset();
+    showToast('リセットした');
+  });
+
+  addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  buildQuota();
+  updateQuota();
+  updateMeter();
+})();
+</script>
+</body>
+</html>
