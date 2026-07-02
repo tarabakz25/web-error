@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - heading "404" [level=1] [ref=e4]
+      - paragraph [ref=e5]: ページが見つかりません — 迷路を抜けてみて
+      - generic [ref=e6]:
+        - generic [ref=e7]: 歩数 0
+        - generic [ref=e8]: 迷路 1
+    - generic "8x8迷路" [ref=e10]
+    - generic [ref=e75]:
+      - button "新しい迷路" [ref=e76] [cursor=pointer]
+      - link "トップへ" [ref=e77] [cursor=pointer]:
+        - /url: ./
+    - generic [ref=e78]:
+      - button [ref=e79] [cursor=pointer]: ▲
+      - button [ref=e80] [cursor=pointer]: ◀
+      - button [ref=e81] [cursor=pointer]: ▼
+      - button [ref=e82] [cursor=pointer]: ▶
+  - alert
